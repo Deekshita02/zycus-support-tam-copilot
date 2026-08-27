@@ -15,7 +15,7 @@ src/
   config.py              domain enums, model settings, prompt version registry
   data_loader.py         tickets/accounts loading + joins
   retrieval.py           dependency-free BM25 search over knowledge_base/
-  llm_client.py          Anthropic API wrapper (structured tool-use + streaming)
+  llm_client.py          Gemini API wrapper (structured tool-use + streaming)
   mock_llm.py            deterministic offline stand-in (USE_MOCK_LLM=1) for CI/smoke tests
   triage.py              Task 1 pipeline
   account_health.py      Task 2 pipeline
@@ -36,7 +36,7 @@ data/, knowledge_base/    the provided mock dataset, unmodified
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # then edit .env and set ANTHROPIC_API_KEY
+cp .env.example .env   # then edit .env and set Gemini_API_KEY
 ```
 
 ## Sample runs
@@ -77,7 +77,7 @@ python cli.py ui
 
 **Offline / no API key:** every command above also works with `USE_MOCK_LLM=1`
 prefixed, which swaps in a deterministic rule-based backend (`src/mock_llm.py`)
-instead of calling Anthropic — useful for CI and for verifying the plumbing
+instead of calling Gemini — useful for CI and for verifying the plumbing
 without spending API credits. `tests/` always runs this way.
 
 ```bash
@@ -157,7 +157,7 @@ emails/phone numbers) on ticket bodies *before* they're sent to the KB
 retrieval and LLM steps, log only redacted versions, and route anything
 tagged Enterprise/regulated-industry through a private-deployment or
 zero-data-retention model endpoint rather than the standard API — this is
-a config flag (`ANTHROPIC_MODEL`/endpoint), not an architecture change, so
+a config flag (`Gemini_MODEL`/endpoint), not an architecture change, so
 it's cheap to add later.
 
 ### Scaling
@@ -176,5 +176,5 @@ real 10x-scale deployment needs this backed by an actual database with
 indexes on `account_id` and `created_at`, not a full-file JSON load. Third:
 naive sequential LLM calls would create a latency queue under load; the
 API layer would need a request queue with concurrency limits tuned to the
-Anthropic rate limit tier, plus backpressure (429s) surfaced to callers
+Gemini rate limit tier, plus backpressure (429s) surfaced to callers
 rather than silently queuing forever.
