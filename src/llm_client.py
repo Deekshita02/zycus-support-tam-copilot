@@ -116,7 +116,7 @@ def call_tool(
         if fn and fn.name == tool_schema["name"]:
             # fn.args is a protobuf Struct-like map; json round-trip gives
             # us a plain dict of plain Python types.
-            return json.loads(json.dumps(dict(fn.args), default=str))
+            return _to_native(dict(fn.args))
 
     raise ValueError(f"Model did not return the expected '{tool_schema['name']}' function call.")
 
@@ -143,3 +143,10 @@ def stream_text(
     for chunk in response:
         if chunk.text:
             yield chunk.text
+def _to_native(obj):
+    if hasattr(obj, "items"):
+        return {k: _to_native(v) for k, v in obj.items()}
+    if hasattr(obj, "__iter__") and not isinstance(obj, (str, bytes)):
+        return [_to_native(v) for v in obj]
+    return obj
+    
