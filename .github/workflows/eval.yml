@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test-and-eval:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests (mock LLM backend, no secrets required)
+        run: pytest -v
+        env:
+          USE_MOCK_LLM: "1"
+
+      - name: Run eval harness
+        run: |
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            echo "Real ANTHROPIC_API_KEY secret found -- running eval harness against the live model."
+            python cli.py eval
+          else
+            echo "No ANTHROPIC_API_KEY secret configured -- running eval harness against the mock backend instead."
+            echo "(Set the ANTHROPIC_API_KEY repo secret to grade against the real model in CI.)"
+            USE_MOCK_LLM=1 python cli.py eval
+          fi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Upload eval report
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: |
+            eval/eval_report.json
+            eval/eval_report.md
