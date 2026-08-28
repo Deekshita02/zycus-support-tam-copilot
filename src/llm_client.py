@@ -4,16 +4,6 @@ Thin wrapper around the Gemini API (Google Generative AI).
 Everything that needs structured output goes through `call_tool`, which
 forces the model to respond via a single function call (Gemini's function
 calling, forced with tool_config mode="ANY") instead of free-text JSON.
-This mirrors the original Anthropic tool-forcing design: the rest of the
-codebase (triage.py, account_health.py) is unchanged -- they only import
-`call_tool` / `stream_text` / `LLMConfigError` and don't know or care which
-provider is behind them.
-
-NOTE: this file was adapted from an Anthropic-only version to use Gemini.
-The `tool_schema` dicts elsewhere in the repo are still written in
-Anthropic's shape (`{"name", "description", "input_schema": {...}}`); the
-`_to_gemini_schema` helper below converts that JSON-schema-style dict into
-the shape Gemini's SDK expects.
 """
 from __future__ import annotations
 
